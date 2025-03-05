@@ -340,6 +340,9 @@ app.post('/addtocart', async (req, res) => {
 //order model
 
 const OrderSchema = new mongoose.Schema({
+
+  userid:{ type: String, required: true },
+
   userDetails: {
     firstName: { type: String, required: true },
     lastName: { type: String},
@@ -353,7 +356,7 @@ const OrderSchema = new mongoose.Schema({
   cartItems: [
     {
       productId: { type: String, required: true },
-      name: { type: String, required: true },
+name: { type: String, required: true },
       price: { type: Number, required: true },
       quantity: { type: Number, required: true },
       totalPrice: { type: Number},
@@ -364,20 +367,21 @@ const OrderSchema = new mongoose.Schema({
   orderDate: { type: Date, default: Date.now }
 })
 
-const Order = mongoose.model('Order', OrderSchema);
+const       Order = mongoose.model('Order', OrderSchema);
 
 //order API
 
 
 app.post('/order', async (req, res) => {
   try {
-    const { user, cartItems, totalAmount } = req.body;
+    const { user, cartItems, totalAmount , userId } = req.body;
 
     if (!user || !cartItems || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid order data" });
     }
 
     const newOrder = new Order({
+      userid:userId.id || userId,
       userDetails: user,
       cartItems: cartItems,
       orderTotal: totalAmount
@@ -395,12 +399,33 @@ app.post('/order', async (req, res) => {
 });
 
 
+//Fetch Order data
+
+app.get('/getOrder', async (req, res) => {
+  try {
+    const fetchedData = await Order.find({});
+    res.json({
+      success: true,
+      data: fetchedData,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error fetching orders",
+      error: error.message,
+    });
+  }
+});
 
 
 
+//get orders
 
 
+app.get('/getOrders',async(req,res)=>{
 
+  const data = Order.findById({userreq.body.userId})
+})
 
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
