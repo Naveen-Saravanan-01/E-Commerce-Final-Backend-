@@ -337,7 +337,62 @@ app.post('/addtocart', async (req, res) => {
   }
 });
 
+//order model
 
+const OrderSchema = new mongoose.Schema({
+  userDetails: {
+    firstName: { type: String, required: true },
+    lastName: { type: String},
+    email: { type: String},
+    phone: { type: String, required: true },
+    city: { type: String, required: true },
+    area: { type: String, required: true },
+    pinCode: { type: String, required: true },
+    landmark: { type: String }
+  },
+  cartItems: [
+    {
+      productId: { type: String, required: true },
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      quantity: { type: Number, required: true },
+      totalPrice: { type: Number},
+      image: { type: String }
+    }
+  ],
+  orderTotal: { type: Number, required: true },
+  orderDate: { type: Date, default: Date.now }
+})
+
+const Order = mongoose.model('Order', OrderSchema);
+
+//order API
+
+
+app.post('/order', async (req, res) => {
+  try {
+    const { user, cartItems, totalAmount } = req.body;
+
+    if (!user || !cartItems || cartItems.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid order data" });
+    }
+
+    const newOrder = new Order({
+      userDetails: user,
+      cartItems: cartItems,
+      orderTotal: totalAmount
+    });
+
+    await newOrder.save();
+    console.log("Order placed successfully");
+
+    res.json({ success: true, message: 'Order placed successfully!', order: newOrder });
+
+  } catch (error) {
+    console.error("Error placing order:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
 
 
 
