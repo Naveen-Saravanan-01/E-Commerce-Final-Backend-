@@ -364,7 +364,13 @@ name: { type: String, required: true },
     }
   ],
   orderTotal: { type: Number, required: true },
-  orderDate: { type: Date, default: Date.now }
+  orderDate: { type: Date, default: Date.now },
+  orderStatus: {
+    type: String,
+    enum: ["pending", "confirmed", "shipped", "delivered"], 
+    default: "pending"
+  }
+
 })
 
 const       Order = mongoose.model('Order', OrderSchema);
@@ -419,13 +425,42 @@ app.get('/getOrder', async (req, res) => {
 
 
 
-//get orders
+
+// Admin Status Update API
+app.put('/status', async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({ success: false, message: "Order ID and status are required" });
+    }
+
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId, 
+      { orderStatus: status }, 
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    console.log("Order status updated:", updatedOrder.orderStatus);
+
+    res.json({
+      success: true,
+      message: `Order status updated to '${updatedOrder.orderStatus}'`,
+      updatedOrder
+    });
+
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
 
 
-app.get('/getOrders',async(req,res)=>{
 
-  const data = Order.findById({userreq.body.userId})
-})
 
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
