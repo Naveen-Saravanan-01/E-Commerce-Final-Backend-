@@ -6,6 +6,7 @@ const multer = require("multer");
 const dotenv = require("dotenv");
 const fs = require("fs");
 const jwt = require("jsonwebtoken");
+const transporter=require('./nodemailer.js')
 
 
 dotenv.config();
@@ -175,6 +176,16 @@ const Users = mongoose.model('users',{
     type:Object
 
   },
+  resetOtp:{
+    type:String,
+    default:null
+  },
+  resetOtpExpire:{
+    type:Date,
+    default:null
+
+
+  },
   date:{
     type:Date,
     default:Date.now
@@ -216,6 +227,38 @@ app.post('/register',async(req,res)=>{
     }
 
     const token= jwt.sign(data,'secret_ecom')
+    const mailOptions = {
+      from: `"Naveen" <${process.env.SENDER_MAIL}>`,
+      to: req.body.email,
+      subject: "Welcome to Naveen's Website",
+      html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
+
+              <div style="display:flex; align-items:center; justify-center">
+
+                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
+                <h1>SHOPPERS</h1>
+
+              </div>
+              <h2 style="color: #333;">Welcome, ${req.body.name}!</h2>
+              <p style="color: #555; font-size: 16px;">
+                  Your account has been successfully created with the email ID: <strong>${req.body.email}</strong>.
+              </p>
+              <img src="https://i.imgur.com/CSFHr5E.png" alt="Welcome Image" style="max-width: 100%; border-radius: 10px; margin-top: 20px;">
+              <p style="margin-top: 20px;">
+                  <a href="https://localhost:5000/login" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+                      Login Now
+                  </a>
+              </p>
+              <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                  If you did not sign up for this account, please ignore this email.
+              </p>
+          </div>
+      `
+  };
+  
+  await transporter.sendMail(mailOptions);
+  
 
     res.json({
       success:true,
@@ -314,12 +357,10 @@ app.post('/addtocart', async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Ensure cartData exists in user document
     if (!user.cartData) {
       user.cartData = {};
     }
 
-    // Update cart with new item quantity
     user.cartData[itemId] = (user.cartData[itemId] || 0) + quantity;
 
     // Save updated cart
@@ -346,7 +387,7 @@ const OrderSchema = new mongoose.Schema({
   userDetails: {
     firstName: { type: String, required: true },
     lastName: { type: String},
-    email: { type: String},
+    email: { type: String, required: true},
     phone: { type: String, required: true },
     city: { type: String, required: true },
     area: { type: String, required: true },
@@ -367,35 +408,93 @@ name: { type: String, required: true },
   orderDate: { type: Date, default: Date.now },
   orderStatus: {
     type: String,
-    enum: ["pending", "confirmed", "shipped", "delivered"], 
-    default: "pending"
+    enum: ["Pending", "Confirmed", "Shipped", "Delivered","Cancelled"], 
+    default: "Pending"
   }
 
 })
 
 const       Order = mongoose.model('Order', OrderSchema);
 
-//order API
+
+//order Api
 
 
 app.post('/order', async (req, res) => {
   try {
-    const { user, cartItems, totalAmount , userId } = req.body;
+    const { user, cartItems, totalAmount, userId, email, name } = req.body;
 
     if (!user || !cartItems || cartItems.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid order data" });
     }
 
     const newOrder = new Order({
-      userid:userId.id || userId,
+      userid: userId.id || userId,
       userDetails: user,
       cartItems: cartItems,
-      orderTotal: totalAmount
+      orderTotal: totalAmount,
     });
 
     await newOrder.save();
-    console.log("Order placed successfully");
+    // console.log("Order placed successfully");
 
+    // Generate cart items in table format
+    const cartItemsMapped = cartItems.map(item => `
+      <tr>
+        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">$${item.price}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">$${item.quantity * item.price}</td>
+      </tr>
+    `).join('');
+
+    const mailOptions = {
+      from: `"Naveen" <${process.env.SENDER_MAIL}>`,
+      to: email,
+      subject: "Order Confirmation - Your Order has been Placed!",
+      html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
+              <div style="display: flex; align-items: center; justify-content: center;">
+                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
+                <h1 style="margin-top:10px;">SHOPPERS</h1>
+              </div>
+              <h2 style="color: #333;">Thank You for Your Order, ${name}!</h2>
+              <p style="color: #555; font-size: 16px;">
+                  Your order has been successfully placed. Here are your order details:
+              </p>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                  <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Product</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Quantity</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Price</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${cartItemsMapped}
+                </tbody>
+              </table>
+
+              <p style="font-size: 18px; margin-top: 20px;"><strong>Total Amount: $${totalAmount}</strong></p>
+
+              <p>Your order will be processed soon.</p>
+
+              <p style="margin-top: 20px;">
+                  <a href="https://localhost:5000/login" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+                      Track Your Order
+                  </a>
+              </p>
+
+              <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                Thanks for shopping with us!
+              </p>
+          </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
     res.json({ success: true, message: 'Order placed successfully!', order: newOrder });
 
   } catch (error) {
@@ -403,6 +502,39 @@ app.post('/order', async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 });
+
+
+
+//Fetch email
+
+
+app.post('/findEmail',async(req,res)=>{
+
+  try{
+    const userId=req.body.userId;
+    const findUser=await Users.findById(userId);
+    const name=findUser.name;
+    const userEmail=findUser.email;
+
+    res.json({
+      success:true,message:userEmail,name:name
+    })
+
+  }catch(err){
+    res.json({
+
+      success:false,
+      message:err.message
+
+    })
+  }
+
+
+
+})
+
+
+
 
 
 //Fetch Order data
@@ -424,17 +556,52 @@ app.get('/getOrder', async (req, res) => {
 });
 
 
+// Cancel Order API
+app.post('/cancelOrder', async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID is required" });
+    }
+
+    let order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    if (order.status === "Cancelled") {
+      return res.status(400).json({ success: false, message: "Order is already cancelled" });
+    }
+
+    order.orderStatus = "Cancelled";
+    await order.save();
+
+    res.json({ success: true, message: "Order cancelled successfully", order });
+
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
+
+
 
 
 // Admin Status Update API
+
+
 app.put('/status', async (req, res) => {
   try {
-    const { orderId, status } = req.body;
+    const { orderId, status, email, name } = req.body;
 
     if (!orderId || !status) {
       return res.status(400).json({ success: false, message: "Order ID and status are required" });
     }
 
+    // Update the order status
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId, 
       { orderStatus: status }, 
@@ -445,11 +612,69 @@ app.put('/status', async (req, res) => {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    console.log("Order status updated:", updatedOrder.orderStatus);
+    const cartItemsMapped = updatedOrder.cartItems.map(item => `
+      <tr>
+        <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">${item.quantity}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">$${item.price}</td>
+        <td style="border: 1px solid #ddd; padding: 8px;">$${(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join("");
+
+    const totalAmount = updatedOrder.orderTotal.toFixed(2);
+
+    // Email content
+    const mailOptions = {
+      from: `"Naveen" <${process.env.SENDER_MAIL}>`,
+      to: email,
+      subject: `Order Update - Your Order is ${updatedOrder.orderStatus}`,
+      html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
+              <div style="display: flex; align-items: center; justify-content: center;">
+                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
+                <h1 style="margin-top:10px;">SHOPPERS</h1>
+              </div>
+              <h2 style="color: #333;">Hello, ${name}!</h2>
+              <p style="color: #555; font-size: 16px;">
+                  Your order status has been updated to <strong>${updatedOrder.orderStatus}</strong>. Here are your order details:
+              </p>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                <thead>
+                  <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Product</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Quantity</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Price</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${cartItemsMapped}
+                </tbody>
+              </table>
+
+              <p style="font-size: 18px; margin-top: 20px;"><strong>Total Amount: $${totalAmount}</strong></p>
+
+              <p>Your order will be processed soon.</p>
+
+              <p style="margin-top: 20px;">
+                  <a href="https://yourwebsite.com/track-order/${orderId}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+                      Track Your Order
+                  </a>
+              </p>
+
+              <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                Thanks for shopping with us!
+              </p>
+          </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
 
     res.json({
       success: true,
-      message: `Order status updated to '${updatedOrder.orderStatus}'`,
+      message: `Order status updated to '${updatedOrder.orderStatus}' and email sent.`,
       updatedOrder
     });
 
@@ -459,6 +684,109 @@ app.put('/status', async (req, res) => {
   }
 });
 
+
+
+//reset password
+
+app.post('/resetOtp', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
+
+  try {
+    const user = await Users.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Generate OTP (6-digit)
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+
+    user.resetOtp = otp;
+    user.resetOtpExpire = Date.now() + 24 * 60 * 60 * 1000; 
+
+    await user.save();
+
+    const mailOptions = {
+      from: `"Naveen" <${process.env.SENDER_MAIL}>`,
+      to: user.email,
+      subject: "Password Reset OTP",
+      text: `Your OTP for password reset is: ${otp}. It will expire in 24 hours.`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ success: true, message: "OTP sent to email", otp });
+
+  } catch (error) {
+    console.error("Error generating OTP:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error", error: error.message });
+  }
+});
+
+
+app.post('/verifyOtp',async(req,res)=>{
+
+  const {email,otp}=req.body;
+
+  const finduser=await Users.findOne({email})
+
+  if(finduser.resetOtp==="" || finduser.resetOtp!==otp){
+
+     return res.json({
+      success:false,message:'Invalid OTP'
+    })
+  }
+
+  res.json({
+    success:true,
+    message:'otp verified'
+  })
+
+  
+
+
+
+
+
+
+})
+
+
+//Set new pass
+
+app.put('/setNew', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+
+        const user = await Users.findOneAndUpdate(
+            { email },
+            { password: password },
+            { new: true } 
+        );
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "Invalid Email",
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Password updated successfully",
+        });
+
+    } catch (err) {
+        res.json({
+            success: false,
+            message: "Error updating password",
+        });
+    }
+});
 
 
 
