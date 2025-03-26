@@ -453,9 +453,14 @@ app.post('/order', async (req, res) => {
       subject: "Order Confirmation - Your Order has been Placed!",
       html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
-              <div style="display: flex; align-items: center; justify-content: center;">
+
+               <div style="display:flex; align-items:center; justify-center">
+
                 <img src="https://i.imgur.com/1HjO0S1.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
+
               </div>
+
+
               <h2 style="color: #333;">Thank You for Your Order, ${name}!</h2>
               <p style="color: #555; font-size: 16px;">
                   Your order has been successfully placed. Here are your order details:
