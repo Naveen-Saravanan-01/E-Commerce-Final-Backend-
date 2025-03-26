@@ -245,7 +245,7 @@ app.post('/register',async(req,res)=>{
               </p>
               <img src="https://i.imgur.com/1HjO0S1.png" alt="Welcome Image" style="max-width: 100%; border-radius: 10px; margin-top: 20px;">
               <p style="margin-top: 20px;">
-                  <a href="https://e-commerce-final-backend-production.up.railway.app" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+                  <a href="https://e-commerce-naveen.vercel.app//" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
                       Login Now
                   </a>
               </p>
