@@ -236,17 +236,16 @@ app.post('/register',async(req,res)=>{
 
               <div style="display:flex; align-items:center; justify-center">
 
-                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
-                <h1>SHOPPERS</h1>
+                <img src="https://i.imgur.com/1HjO0S1.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
 
               </div>
               <h2 style="color: #333;">Welcome, ${req.body.name}!</h2>
               <p style="color: #555; font-size: 16px;">
                   Your account has been successfully created with the email ID: <strong>${req.body.email}</strong>.
               </p>
-              <img src="https://i.imgur.com/CSFHr5E.png" alt="Welcome Image" style="max-width: 100%; border-radius: 10px; margin-top: 20px;">
+              <img src="https://i.imgur.com/1HjO0S1.png" alt="Welcome Image" style="max-width: 100%; border-radius: 10px; margin-top: 20px;">
               <p style="margin-top: 20px;">
-                  <a href="https://localhost:5000/login" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
+                  <a href="https://e-commerce-final-backend-production.up.railway.app/login" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">
                       Login Now
                   </a>
               </p>
@@ -455,8 +454,7 @@ app.post('/order', async (req, res) => {
       html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
               <div style="display: flex; align-items: center; justify-content: center;">
-                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
-                <h1 style="margin-top:10px;">SHOPPERS</h1>
+                <img src="https://i.imgur.com/1HjO0S1.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
               </div>
               <h2 style="color: #333;">Thank You for Your Order, ${name}!</h2>
               <p style="color: #555; font-size: 16px;">
@@ -631,8 +629,7 @@ app.put('/status', async (req, res) => {
       html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;">
               <div style="display: flex; align-items: center; justify-content: center;">
-                <img src="https://i.imgur.com/CSFHr5E.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
-                <h1 style="margin-top:10px;">SHOPPERS</h1>
+                <img src="https://i.imgur.com/1HjO0S1.png" alt="Website Logo" style="max-width: 150px; margin-bottom: 20px;">
               </div>
               <h2 style="color: #333;">Hello, ${name}!</h2>
               <p style="color: #555; font-size: 16px;">
